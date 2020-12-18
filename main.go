@@ -11,7 +11,7 @@ import (
 var (
 	Token string
 	Port int
-	UDPSocket net.UDPConn
+	UDPSocket *net.UDPConn
 	ChannelID string
 	ServerList []string
 	ServerListArg string
@@ -39,7 +39,7 @@ func main() {
 		IP:   net.ParseIP("0.0.0.0"),
 	}
 	UDPSocket_temp, udp_err := net.ListenUDP("udp", &listen_addr)
-	UDPSocket = *UDPSocket_temp
+	UDPSocket = UDPSocket_temp
 	if udp_err != nil {
 		fmt.Println("net ListenPacket:", err)
 		return
