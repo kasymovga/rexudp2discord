@@ -134,7 +134,7 @@ func main() {
 					if r >= 0xE000 && r < 0xE100 {
 						r -= 0xE000;
 					}
-					if (r > 0) {
+					if (r > 0 && r != utf8.RuneError) {
 						if r < 256 {
 							r = QuakeSymbolMap[r]
 						}
