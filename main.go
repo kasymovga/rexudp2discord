@@ -1,6 +1,7 @@
 package main
 
 import (
+	"unicode/utf8"
 	"flag"
 	"fmt"
 	"strings"
@@ -16,6 +17,40 @@ var (
 	ServerList []string
 	ServerListArg string
 	ServerAddressList []net.UDPAddr
+	QuakeSymbolMap = []rune{
+		0, '#',  '#',  '#',  '#',  '.',  '#',  '#',
+		'#',  9,    10,   '#',  ' ',  13,   '.',  '.',
+		'[',  ']',  '0',  '1',  '2',  '3',  '4',  '5',
+		'6',  '7',  '8',  '9',  '.',  '<',  '=',  '>',
+		' ',  '!',  '"',  '#',  '$',  '%',  '&',  '\'',
+		'(',  ')',  '*',  '+',  ',',  '-',  '.',  '/',
+		'0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',
+		'8',  '9',  ':',  ';',  '<',  '=',  '>',  '?',
+		'@',  'A',  'B',  'C',  'D',  'E',  'F',  'G',
+		'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O',
+		'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W',
+		'X',  'Y',  'Z',  '[',  '\\', ']',  '^',  '_',
+		'`',  'a',  'b',  'c',  'd',  'e',  'f',  'g',
+		'h',  'i',  'j',  'k',  'l',  'm',  'n',  'o',
+		'p',  'q',  'r',  's',  't',  'u',  'v',  'w',
+		'x',  'y',  'z',  '{',  '|',  '}',  '~',  '<',
+		'<',  '=',  '>',  '#',  '#',  '.',  '#',  '#',
+		'#',  '#',  ' ',  '#',  ' ',  '>',  '.',  '.',
+		'[',  ']',  '0',  '1',  '2',  '3',  '4',  '5',
+		'6',  '7',  '8',  '9',  '.',  '<',  '=',  '>',
+		' ',  '!',  '"',  '#',  '$',  '%',  '&',  '\'',
+		'(',  ')',  '*',  '+',  ',',  '-',  '.',  '/',
+		'0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',
+		'8',  '9',  ':',  ';',  '<',  '=',  '>',  '?',
+		'@',  'A',  'B',  'C',  'D',  'E',  'F',  'G',
+		'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O',
+		'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W',
+		'X',  'Y',  'Z',  '[',  '\\', ']',  '^',  '_',
+		'`',  'a',  'b',  'c',  'd',  'e',  'f',  'g',
+		'h',  'i',  'j',  'k',  'l',  'm',  'n',  'o',
+		'p',  'q',  'r',  's',  't',  'u',  'v',  'w',
+		'x',  'y',  'z',  '{',  '|',  '}',  '~',  '<',
+	}
 )
 
 func init() {
@@ -53,6 +88,7 @@ func main() {
 		return
 	}
 	buf := make([]byte, 2048)
+	u8buffer := make([]byte, 7)
 	for {
 		n, addr, err := UDPSocket.ReadFromUDP(buf)
 		if err != nil {
@@ -90,8 +126,23 @@ func main() {
 			s := string(buf[4:n])
 			fmt.Println(s)
 			if (s[0:19] == "extResponse udpchat") {
-				s1 := s[19:n - 4]
-				dg.ChannelMessageSend(ChannelID, s1);
+				s1 := []byte(s[19:])
+				outstr := ""
+				for len(s1) > 0 {
+					r, r_size := utf8.DecodeRune(s1);
+					s1 = s1[r_size:]
+					if r >= 0xE000 && r < 0xE100 {
+						r -= 0xE000;
+					}
+					if (r > 0) {
+						if r < 256 {
+							r = QuakeSymbolMap[r]
+						}
+						r_size = utf8.EncodeRune(u8buffer, r)
+						outstr += string(u8buffer[:r_size])
+					}
+				}
+				dg.ChannelMessageSend(ChannelID, outstr);
 			} else {
 				fmt.Println("Incorrect packet")
 			}
